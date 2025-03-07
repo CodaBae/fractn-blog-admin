@@ -27,6 +27,13 @@ const Sidebar = ({ closeSidebar }) => {
             <PiNotebook className={`${location.pathname === "/" ? "text-[#fff]" : ""} w-4 h-4 text-[#575757] group-hover:text-[#fff]`} />
             <p className={`${location.pathname === "/" ? "text-[#fff]" : ""} font-euclid text-[#575757] group-hover:text-[#fff] font-medium text-sm`}>Blog</p>
         </div>
+        <div 
+            className={`${location.pathname === "/view-blog"  ? "bg-[#1EC677]" : ""} flex items-center gap-3 group hover:bg-[#1EC677] p-2 w-[156px] cursor-pointer rounded-lg h-auto`} 
+            onClick={() => {navigate("/view-blog"); closeSidebar()}}
+        >
+            <PiNotebook className={`${location.pathname === "/view-blog" ? "text-[#fff]" : ""} w-4 h-4 text-[#575757] group-hover:text-[#fff]`} />
+            <p className={`${location.pathname === "/view-blog" ? "text-[#fff]" : ""} font-euclid text-[#575757] group-hover:text-[#fff] font-medium text-sm`}>View Blog</p>
+        </div>
 
     </div>
 
