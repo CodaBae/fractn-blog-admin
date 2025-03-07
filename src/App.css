@@ -1,0 +1,21 @@
+/* Hide the scrollbar in Chrome, Safari, and other WebKit browsers */
+::-webkit-scrollbar {
+  width: 0; /* Remove scrollbar space */
+  height: 0;
+}
+
+/* For Internet Explorer, Edge, and Firefox */
+* {
+  scrollbar-width: none; /* For Firefox */
+  -ms-overflow-style: none; /* For Internet Explorer and Edge */
+  
+}
+
+/* Ensure the element is scrollable */
+.scrollable-element {
+  overflow: scroll; /* or auto, depending on your case */
+}
+
+body {
+font-family: "Euclid Circular", "Circular Std Medium", Roboto, sans-serif;
+}
