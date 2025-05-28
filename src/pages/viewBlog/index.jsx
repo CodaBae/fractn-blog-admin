@@ -5,7 +5,7 @@ import { CgSpinner } from 'react-icons/cg';
 import { db } from '../../firebase-config';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 
-import ModalPop from '../../components/ModalPop';
+import ModalPop from '../../components/modalPop';
 import { MdDeleteForever } from 'react-icons/md';
 
 const ViewBlog = () => {
