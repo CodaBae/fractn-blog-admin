@@ -152,6 +152,9 @@ const ViewBlog = () => {
                             </div>
                         </th>
                         <th className='w-[400px] h-[18px] text-left font-euclid text-[#333843] p-4 font-medium'>
+                            <p className='text-sm text-[#333843] font-euclid'>Author</p>
+                        </th>
+                        <th className='w-[400px] h-[18px] text-left font-euclid text-[#333843] p-4 font-medium'>
                             <p className='text-sm text-[#333843] font-euclid'>Topic</p>
                         </th>
                         {/* <th className='w-[400px] h-[18px] text-left font-euclid text-[#333843] p-4 font-medium'>
@@ -180,8 +183,11 @@ const ViewBlog = () => {
                                 <td className='w-[400px] h-[56px] text-left font-euclid text-[#333843] p-4 font-medium'>
                                     <p className='font-euclid text-[#333843] font-medium text-sm'>{`#${item?.id.slice(0, 8)}`}</p>
                                 </td>
-                                <td className='w-[400px] h-[56px] text-left font-euclid text-[#333843] p-4 font-medium'>
+                                <td className='w-[200px] h-[56px] text-left font-euclid text-[#333843] p-4 font-medium'>
                                     <p className='font-euclid text-[#333843] font-medium text-sm'>{item.createdAt?.toDate().toDateString()}</p>
+                                </td>
+                                <td className='w-[400px] h-[56px] text-left font-euclid text-[#333843] p-4 font-medium'>
+                                    <p className='font-euclid text-[#333843] font-medium text-sm'>{item?.author || "N/A"}</p>
                                 </td>
                                 <td className='w-[400px] h-[56px] text-left font-euclid text-[#333843] p-4 font-medium'>
                                     <p className='font-euclid text-[#333843] font-medium text-sm'>{item?.topic || "N/A"}</p>

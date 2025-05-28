@@ -3,6 +3,7 @@ import { Formik, Form} from "formik"
 import * as Yup from "yup"
 import { toast } from 'react-toastify';
 import { CgSpinner } from 'react-icons/cg'
+
 import { CustomToolbar } from './components/CustomToolbar';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -22,10 +23,15 @@ const Blog = () => {
     const formValidationSchema = Yup.object().shape({
         category: Yup.string().required("Category is required"),
         topic: Yup.string().required("Topic is required"),
+        author: Yup.string().required("Author's name is required"),
         description: Yup.string().required("Content is required"),
+        metaDescription: Yup.string()
+                        .required("Meta description is required")
+                        .max(160, "Max 160 characters"),
     })
 
     const fileInputRef = useRef(null); 
+
 
     const categoryOptions = [
         "Product Guides",
@@ -68,6 +74,14 @@ const Blog = () => {
             }
         }
     };
+
+    // Function to generate a slug from the topic
+    const generateSlug = (text) => {
+    return text
+        .toLowerCase()
+        .replace(/[^\w ]+/g, '')
+        .replace(/ +/g, '-');
+    };
     
 
     // Updated submitForm function
@@ -78,7 +92,10 @@ const Blog = () => {
                 category: values.category,
                 topic: values.topic,
                 content: values.description,
+                metaDescription: values.metaDescription,
                 imageUrl: userImage?.secure_url || '',
+                slug: generateSlug(values.topic),
+                author: values.author,
                 createdAt: new Date(),
             });
             
@@ -106,13 +123,15 @@ const Blog = () => {
 
 
   return (
-    <div className="p-4">
-        <div className=' w-[500px]'>
+     <div className="p-4">
+        <div className='w-full'>
             <Formik
                 initialValues={{
                     topic: "",
                     description: "",
-                    category: ""
+                    category: "",
+                    metaDescription: "",
+                    author: ""
                 }}
                 validationSchema={formValidationSchema}
                 onSubmit={(values, action) => {
@@ -133,87 +152,124 @@ const Blog = () => {
                     values,
                 }) => (
                 <Form onSubmit={handleSubmit} className="flex flex-col">
-                    <div className='flex flex-col gap-6 h-[47px]'>
-            
-                        <div className="flex flex-col">
-                            <label htmlFor="Category" className="font-euclid text-sm">Category</label>
-                            <select
-                                name="category"
-                                value={values.category}
-                                onChange={handleChange}
-                                className="rounded-lg border-[#E5E5EA] text-[#3A3A3C] outline-[#34C759] w-full mt-1.5 h-[56px] border-solid  p-2 border"
-                            >
-                                <option value="" defaultValue>Select Category</option>
-                                {
-                                    categoryOptions.map((item, index) => (
-                                        <option key={index}>{item}</option>
-                                    ))
-                                }
-                            </select>
-                            {errors.category && touched.category ? (
-                            <div className='text-RED-_100 text-xs'>{errors.category}</div>
-                            ) : null}
-                        </div>
+                    <div className='flex flex-col gap-6'>
 
-                        <div className="flex flex-col ">
-                            <label htmlFor="Topic" className="font-euclid text-sm">Topic</label>
-                            <input
-                                name="topic"
-                                placeholder="Type topic here..."
-                                type="text" 
-                                value={values.topic}
-                                onChange={handleChange}
-                                className="rounded-lg border-[#E5E5EA] font-euclid text-[#3A3A3C] outline-[#34C759] w-full mt-1.5 h-[56px] border-solid  p-2 border"
-                            />
-                            {errors.topic && touched.topic ? (
-                            <div className='text-RED-_100 text-xs'>{errors.topic}</div>
-                            ) : null}
-                        </div>
-
-                        <div className='flex flex-col gap-[9px]'>
-                            <p className='font-medium font-euclid text-[#334155]'>Title Image</p>
-                            <div className='flex items-center gap-5'>
-                                <div>
-                                    {userImage?.secure_url ? 
-                                        <div className='flex flex-col gap-1 w-full relative'>
-                                            <div className='flex items-center justify-end'>
-                                                <MdClose  
-                                                className='text-[24px] absolute top-5 right-5 font-hanken text-[#fff]'
-                                                onClick={() => setUserImage(null)}
-                                                />
-                                            </div>
-                                            
-                                            <img src={userImage?.secure_url} alt="Preview" className=" w-[518px] h-[359px]" />
-                                        </div> 
-                                        :
-                                        <div 
-                                            className='p-[9px] w-[518px] rounded-lg bg-[#000929] h-[359px] cursor-pointer flex-col items-center flex justify-center gap-[16px]'
-                                            onClick={handleDivClick}
-                                        >
-                                            <div className='flex flex-col items-center gap-[16px]'>
-                                                <img src={Upload} alt='upload' className='w-[56px] h-[56px]' />
-                                                <label htmlFor="fileInput" className='cursor-pointer px-[22px] flex justify-center items-center'>
-                                                    {uploadImageLoading ? 
-                                                        <p className='text-[#FFFFFF] text-base font-euclid'>Please wait...</p>
-                                                        :
-                                                        <p className='text-[#FFFFFF] text-base font-euclid'> <span className='underline text-[#1EC677] font-euclid text-base'>Choose File</span> to upload </p>
-                                                    }
-                                                    <input
-                                                        type="file"
-                                                        id="fileInput"
-                                                        accept='image/*'
-                                                        style={{ display: 'none' }}
-                                                        onChange={handleFileChange}
-                                                        ref={fileInputRef}
-                                                    />
-                                                </label>
-                                            </div>
-                                        </div>
-                                    }
+                        <div className='flex flex-col lg:flex-row gap-6'>
+                            <div className='flex flex-col w-full gap-6'>
+                                <div className="flex flex-col ">
+                                    <label htmlFor="Author" className="font-euclid text-sm">Author</label>
+                                    <input
+                                        name="author"
+                                        placeholder="Type author's name here..."
+                                        type="text" 
+                                        value={values.author}
+                                        onChange={handleChange}
+                                        className="rounded-lg border-[#E5E5EA] font-euclid text-[#3A3A3C] outline-[#34C759] w-full mt-1.5 h-[56px] border-solid  p-2 border"
+                                    />
+                                    {errors.author && touched.author ? (
+                                    <div className='text-RED-_100 text-xs'>{errors.author}</div>
+                                    ) : null}
                                 </div>
-                            
+
+                                <div className="flex flex-col">
+                                    <label htmlFor="Category" className="font-euclid text-sm">Category</label>
+                                    <select
+                                        name="category"
+                                        value={values.category}
+                                        onChange={handleChange}
+                                        className="rounded-lg border-[#E5E5EA] text-[#3A3A3C] outline-[#34C759] w-full mt-1.5 h-[56px] border-solid  p-2 border"
+                                    >
+                                        <option value="" defaultValue>Select Category</option>
+                                        {
+                                            categoryOptions.map((item, index) => (
+                                                <option key={index}>{item}</option>
+                                            ))
+                                        }
+                                    </select>
+                                    {errors.category && touched.category ? (
+                                    <div className='text-RED-_100 text-xs'>{errors.category}</div>
+                                    ) : null}
+                                </div>
+
+                                <div className="flex flex-col ">
+                                    <label htmlFor="Topic" className="font-euclid text-sm">Topic</label>
+                                    <input
+                                        name="topic"
+                                        placeholder="Type topic here..."
+                                        type="text" 
+                                        value={values.topic}
+                                        onChange={handleChange}
+                                        className="rounded-lg border-[#E5E5EA] font-euclid text-[#3A3A3C] outline-[#34C759] w-full mt-1.5 h-[56px] border-solid  p-2 border"
+                                    />
+                                    {errors.topic && touched.topic ? (
+                                    <div className='text-RED-_100 text-xs'>{errors.topic}</div>
+                                    ) : null}
+                                </div>
+
+                                <div className="flex flex-col ">
+                                    <label htmlFor="metaDescription" className="font-euclid text-sm">Meta Description</label>
+                                    <textarea
+                                        name="metaDescription"
+                                        placeholder="Enter meta description (160 characters max)"
+                                        value={values.metaDescription}
+                                        onChange={handleChange}
+                                        className="rounded-lg border-[#E5E5EA] font-euclid text-[#3A3A3C] outline-[#34C759] w-full mt-1.5 h-24 border-solid p-2 border"
+                                    />
+                                    {errors.metaDescription && touched.metaDescription && (
+                                        <div className='text-RED-_100 text-xs'>{errors.metaDescription}</div>
+                                    )}
+                                </div>
+
+
+                            </div>
+
+                            <div className='flex flex-col gap-[9px]'>
+                                <p className='font-medium font-euclid text-[#334155]'>Featured Image</p>
+                                <div className='flex items-center gap-5'>
+                                    <div>
+                                        {userImage?.secure_url ? 
+                                            <div className='flex flex-col gap-1 w-full relative'>
+                                                <div className='flex items-center justify-end'>
+                                                    <MdClose  
+                                                    className='text-[24px] absolute top-5 right-5 font-hanken text-[#fff]'
+                                                    onClick={() => setUserImage(null)}
+                                                    />
+                                                </div>
+                                                
+                                                <img src={userImage?.secure_url} alt="Preview" className=" w-[518px] h-[359px]" />
+                                            </div> 
+                                            :
+                                            <div 
+                                                className='p-[9px] w-[518px] rounded-lg bg-[#000929] h-[400px] cursor-pointer flex-col items-center flex justify-center gap-[16px]'
+                                                onClick={handleDivClick}
+                                            >
+                                                <div className='flex flex-col items-center gap-[16px]'>
+                                                    <img src={Upload} alt='upload' className='w-[56px] h-[56px]' />
+                                                    <label htmlFor="fileInput" className='cursor-pointer px-[22px] flex justify-center items-center'>
+                                                        {uploadImageLoading ? 
+                                                            <p className='text-[#FFFFFF] text-base font-euclid'>Please wait...</p>
+                                                            :
+                                                            <p className='text-[#FFFFFF] text-base font-euclid'> <span className='underline text-[#1EC677] font-euclid text-base'>Choose File</span> to upload </p>
+                                                        }
+                                                        <input
+                                                            type="file"
+                                                            id="fileInput"
+                                                            accept='image/*'
+                                                            style={{ display: 'none' }}
+                                                            onChange={handleFileChange}
+                                                            ref={fileInputRef}
+                                                        />
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                
+                                </div>
                             </div>
                         </div>
+
+            
 
                         <div className='flex flex-col w-full'>
                             <label htmlFor="Content" className="font-euclid text-sm">Content</label>
@@ -225,7 +281,7 @@ const Blog = () => {
                                 modules={modules}
                                 formats={formats}
                                 style={{ backgroundColor: "#fff", minHeight: "193px", border: '1px solid #ccc', borderRadius: '4px', padding: '10px'}}
-                                className="lg:w-[507px] h-[193px] mt-1.5 outline-none"     
+                                className="lg:w-full h-[100vh] mt-1.5 outline-none"     
                             />
                             
                             {errors.description && touched.description ? 
@@ -236,7 +292,7 @@ const Blog = () => {
                     
 
                         <button 
-                            className= "bg-[#1EC677] mt-5 text-[#fff] rounded-lg p-3 cursor-pointer w-full h-[54px] flex justify-center"
+                            className= "bg-[#1EC677] mt-5 text-[#fff] rounded-lg p-3 cursor-pointer w-full h-[54px] flex flex-col items-center justify-center"
                             type="submit"
                         >
                             <p className='text-[#fff] text-sm  text-center  font-medium'>{loading ? <CgSpinner className=" animate-spin text-lg  " /> : 'Send'}</p>
