@@ -18,7 +18,9 @@ import Upload from "../../assets/svg/uploadIcon.svg"
 const Blog = () => {
     const [loading, setLoading] = useState(false)
     const [uploadImageLoading, setUploadImageLoading] = useState(false)
+    const [uploadAuthorImageLoading, setUploadAuthorImageLoading] = useState(false)
     const [userImage, setUserImage] = useState(null)
+    const [authorImage, setAuthorImage] = useState(null) 
 
     const formValidationSchema = Yup.object().shape({
         category: Yup.string().required("Category is required"),
@@ -31,7 +33,8 @@ const Blog = () => {
     })
 
     const fileInputRef = useRef(null); 
-
+    const authorFileInputRef = useRef(null); 
+   
 
     const categoryOptions = [
         "Product Guides",
@@ -45,6 +48,11 @@ const Blog = () => {
         fileInputRef.current.click();
     };
 
+    // Handle click for author image upload
+    const handleAuthorDivClick = () => {
+        authorFileInputRef.current.click();
+    };
+
     const handleFileChange = async (e) => {
         setUploadImageLoading(true)
         const files = e.target.files;
@@ -56,7 +64,7 @@ const Blog = () => {
             try {
                 const uploadResponse = await axios.post("https://api.cloudinary.com/v1_1/dizlp3hvp/upload", formData);
                 const data = uploadResponse.data;
-                setUserImage(data);  // Set the uploaded image as the userImage
+                setUserImage(data);
                 toast("Image Uploaded Successfully", {
                     position: "top-right",
                     autoClose: 5000,
@@ -75,16 +83,44 @@ const Blog = () => {
         }
     };
 
-    // Function to generate a slug from the topic
-    const generateSlug = (text) => {
-    return text
-        .toLowerCase()
-        .replace(/[^\w ]+/g, '')
-        .replace(/ +/g, '-');
+    // Handle author image upload
+    const handleAuthorFileChange = async (e) => {
+        setUploadAuthorImageLoading(true)
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            const file = files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', 'rztljgso');
+            try {
+                const uploadResponse = await axios.post("https://api.cloudinary.com/v1_1/dizlp3hvp/upload", formData);
+                const data = uploadResponse.data;
+                setAuthorImage(data);
+                toast("Author Image Uploaded Successfully", {
+                    position: "top-right",
+                    autoClose: 5000,
+                    closeOnClick: true,
+                });
+            } catch (error) {
+                toast("Error Uploading Author Image", {
+                    position: "top-right",
+                    autoClose: 5000,
+                    closeOnClick: true,
+                });
+                console.error('Error uploading author image:', error);
+            } finally {
+                setUploadAuthorImageLoading(false)
+            }
+        }
     };
-    
 
-    // Updated submitForm function
+    const generateSlug = (text) => {
+        return text
+            .toLowerCase()
+            .replace(/[^\w ]+/g, '')
+            .replace(/ +/g, '-');
+    };
+
     const submitForm = async (values, action) => {
         setLoading(true);
         try {
@@ -94,6 +130,7 @@ const Blog = () => {
                 content: values.description,
                 metaDescription: values.metaDescription,
                 imageUrl: userImage?.secure_url || '',
+                authorImageUrl: authorImage?.secure_url || '', 
                 slug: generateSlug(values.topic),
                 author: values.author,
                 createdAt: new Date(),
@@ -105,9 +142,10 @@ const Blog = () => {
                 closeOnClick: true,
             });
             
-            // Reset form and state
+            // Reset form and states
             action.resetForm();
             setUserImage(null);
+            setAuthorImage(null); 
         } catch (error) {
             toast.error('Error submitting blog post', {
                 position: "top-right",
@@ -121,9 +159,8 @@ const Blog = () => {
     };
 
 
-
   return (
-     <div className="p-4">
+    <div className="p-4">
         <div className='w-full'>
             <Formik
                 initialValues={{
@@ -136,7 +173,6 @@ const Blog = () => {
                 validationSchema={formValidationSchema}
                 onSubmit={(values, action) => {
                     window.scrollTo(0, 0)
-                    console.log(values, "often")
                     submitForm(values, action)
                 }}
             >
@@ -148,7 +184,6 @@ const Blog = () => {
                     setFieldValue,
                     errors,
                     touched,
-                    // setFieldTouched,
                     values,
                 }) => (
                 <Form onSubmit={handleSubmit} className="flex flex-col">
@@ -169,6 +204,56 @@ const Blog = () => {
                                     {errors.author && touched.author ? (
                                     <div className='text-RED-_100 text-xs'>{errors.author}</div>
                                     ) : null}
+                                </div>
+
+                                {/*  Author Image Upload Section */}
+                                <div className="flex flex-col">
+                                    <label className="font-euclid text-sm">Author Image</label>
+                                    <div className='flex items-center gap-5 mt-1.5'>
+                                        <div className='w-full'>
+                                            {authorImage?.secure_url ? 
+                                                <div className='flex flex-col gap-1 w-full relative'>
+                                                    <div className='flex items-center justify-end'>
+                                                        <MdClose  
+                                                        className='text-[24px] absolute top-2 right-2 font-hanken text-[#fff] bg-black/50 rounded-full p-0.5 cursor-pointer'
+                                                        onClick={() => setAuthorImage(null)}
+                                                        />
+                                                    </div>
+                                                    <img 
+                                                        src={authorImage?.secure_url} 
+                                                        alt="Author Preview" 
+                                                        className="w-full h-32 object-cover rounded-lg" 
+                                                    />
+                                                </div> 
+                                                :
+                                                <div 
+                                                    className='p-4 rounded-lg bg-[#000929] border border-dashed border-gray-300 cursor-pointer flex items-center justify-center gap-2 h-32'
+                                                    onClick={handleAuthorDivClick}
+                                                >
+                                                    <div className='flex flex-col items-center gap-2'>
+                                                        <img src={Upload} alt='upload' className='w-6 h-6' />
+                                                        <label htmlFor="authorFileInput" className='cursor-pointer flex justify-center items-center'>
+                                                            {uploadAuthorImageLoading ? 
+                                                                <p className='text-gray-600 text-sm font-euclid'>Uploading...</p>
+                                                                :
+                                                                <p className='text-gray-600 text-sm font-euclid'> 
+                                                                    <span className='text-[#1EC677] underline font-medium'>Upload Author Image</span>
+                                                                </p>
+                                                            }
+                                                            <input
+                                                                type="file"
+                                                                id="authorFileInput"
+                                                                accept='image/*'
+                                                                style={{ display: 'none' }}
+                                                                onChange={handleAuthorFileChange}
+                                                                ref={authorFileInputRef}
+                                                            />
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="flex flex-col">
@@ -219,8 +304,6 @@ const Blog = () => {
                                         <div className='text-RED-_100 text-xs'>{errors.metaDescription}</div>
                                     )}
                                 </div>
-
-
                             </div>
 
                             <div className='flex flex-col gap-[9px]'>
@@ -264,12 +347,9 @@ const Blog = () => {
                                             </div>
                                         }
                                     </div>
-                                
                                 </div>
                             </div>
                         </div>
-
-            
 
                         <div className='flex flex-col w-full'>
                             <label htmlFor="Content" className="font-euclid text-sm">Content</label>
@@ -297,12 +377,7 @@ const Blog = () => {
                         >
                             <p className='text-[#fff] text-sm  text-center  font-medium'>{loading ? <CgSpinner className=" animate-spin text-lg  " /> : 'Send'}</p>
                         </button>
-
-                    
-                    
                     </div>
-                    
-
                 </Form>
                 )}
             </Formik>
