@@ -5,6 +5,7 @@ import DashboardLayout from '../layouts';
 
 import Blog from '../pages/blog';
 import ViewBlog from '../pages/viewBlog';
+import UpdateBlog from '../pages/viewBlog/component/UpdateBlog';
 
 
 export default function Routers() {
@@ -16,6 +17,7 @@ export default function Routers() {
         <Route element={<DashboardLayout />}>
           <Route path='/' element={<Blog />} />
           <Route path='/view-blog' element={<ViewBlog />} />
+          <Route path='/edit-blog' element={<UpdateBlog />} />
         </Route>
 
       </Routes>

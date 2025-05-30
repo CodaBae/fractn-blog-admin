@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import DeleteBlog from './component/DeleteBlog';
+
 import { IoIosArrowBack, IoIosArrowDown, IoIosArrowForward } from 'react-icons/io';
 import { CgSpinner } from 'react-icons/cg';
 import { db } from '../../firebase-config';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { MdDeleteForever } from 'react-icons/md';
+import { FaRegEdit } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 import ModalPop from '../../components/modalPop';
-import { MdDeleteForever } from 'react-icons/md';
+import Pagination from '../../components/Pagination';
+
+import DeleteBlog from './component/DeleteBlog';
 
 const ViewBlog = () => {
     const [loading, setLoading] = useState(false)
@@ -21,25 +26,37 @@ const ViewBlog = () => {
     const [blogs, setBlogs] = useState([]);
     const [filteredBlogs, setFilteredBlogs] = useState([]);
 
+    const navigate = useNavigate()
+
+
     const fetchBlog = async () => {
         setLoading(true);
         try {
             const blogsCollection = collection(db, 'blogs');
-            let q = query(blogsCollection);
+            let q;
             
-            // Add date filtering if dates are selected
             if (startDate && endDate) {
+                const adjustedEndDate = new Date(endDate);
+                adjustedEndDate.setHours(23, 59, 59, 999);
+                
                 q = query(
                     blogsCollection,
-                    where('created_on', '>=', new Date(startDate)),
-                    where('created_on', '<=', new Date(endDate))
+                    where('createdAt', '>=', new Date(startDate)),
+                    where('createdAt', '<=', adjustedEndDate),
+                    orderBy('createdAt', 'desc') // Add sorting
+                );
+            } else {
+                q = query(
+                    blogsCollection,
+                    orderBy('createdAt', 'desc') // Add sorting for default case
                 );
             }
-
+    
             const querySnapshot = await getDocs(q);
             const blogsData = querySnapshot.docs.map(doc => ({
                 id: doc.id,
-                ...doc.data()
+                ...doc.data(),
+                created_on: doc.data().createdAt?.toDate()
             }));
             
             setBlogs(blogsData);
@@ -50,30 +67,15 @@ const ViewBlog = () => {
             setLoading(false);
         }
     };
+    
 
+    // Re-fetch blogs when startDate or endDate changes
     useEffect(() => {
         fetchBlog();
-    }, []);
+    }, [startDate, endDate]); // Add dependencies here
 
     useEffect(() => {
-        // Filter blogs based on date range
-        const filtered = blogs.filter(blog => {
-            const blogDate = new Date(blog.created_on);
-            const start = startDate ? new Date(startDate) : null;
-            const end = endDate ? new Date(endDate) : null;
-            
-            if (start && end) return blogDate >= start && blogDate <= end;
-            if (start) return blogDate >= start;
-            if (end) return blogDate <= end;
-            return true;
-        });
-        
-        setFilteredBlogs(filtered);
-        setCurrentPage(1); // Reset to first page when filters change
-    }, [startDate, endDate, blogs]);
-
-    useEffect(() => {
-        setTotalPages(Math.ceil(filteredBlogs.length / blogsPerPage));
+        setTotalPages(Math.ceil(filteredBlogs?.length / blogsPerPage));
     }, [filteredBlogs, blogsPerPage]);
 
     // Get current blogs
@@ -81,13 +83,6 @@ const ViewBlog = () => {
     const indexOfFirstBlog = indexOfLastBlog - blogsPerPage;
     const currentBlogs = filteredBlogs.slice(indexOfFirstBlog, indexOfLastBlog);
 
-    const handleNextPage = () => {
-        if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-    };
-
-    const handlePrevPage = () => {
-        if (currentPage > 1) setCurrentPage(currentPage - 1);
-    };
 
   return (
     <div className='mt-[0px] w-full'>
@@ -114,25 +109,27 @@ const ViewBlog = () => {
                 <div className='flex flex-col lg:flex-row gap-5 lg:gap-0 items-center justify-between px-5'>
                     <p className='font-euclid text-[18px] font-medium text-[#1C1C1E]'>All Blogs</p>
 
-                    {/* <div className='flex flex-col gap-1'>
-                        <p className='font-euclid text-sm font-medium text-[#1C1C1E]'>Start Date</p>
-                        <input
-                            type="date"
-                            value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                            className="w-full lg:w-[150px] h-[40px] border border-[#EBEDF0] outline-[#1EC677] rounded-lg p-2"
-                        />
+                    <div className='flex items-start gap-5'>
+                        <div className='flex flex-col gap-1'>
+                            <p className='font-euclid text-sm font-medium text-[#1C1C1E]'>Start Date</p>
+                            <input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                className="w-full lg:w-[150px] h-[40px] border border-[#EBEDF0] outline-[#1EC677] rounded-lg p-2"
+                            />
+                        </div>
+                        
+                        <div className='flex flex-col gap-1'>
+                            <p className='font-euclid text-sm font-medium text-[#1C1C1E]'>End Date</p>
+                            <input
+                                type="date"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                                className="w-full lg:w-[150px] h-[40px] border border-[#EBEDF0] outline-[#1EC677] rounded-lg p-2"
+                            />
+                        </div>
                     </div>
-                    
-                    <div className='flex flex-col gap-1'>
-                        <p className='font-euclid text-sm font-medium text-[#1C1C1E]'>End Date</p>
-                        <input
-                            type="date"
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                            className="w-full lg:w-[150px] h-[40px] border border-[#EBEDF0] outline-[#1EC677] rounded-lg p-2"
-                        />
-                    </div> */}
                    
                 </div>
 
@@ -183,8 +180,9 @@ const ViewBlog = () => {
                                 <td className='w-[400px] h-[56px] text-left font-euclid text-[#333843] p-4 font-medium'>
                                     <p className='font-euclid text-[#333843] font-medium text-sm'>{`#${item?.id.slice(0, 8)}`}</p>
                                 </td>
-                                <td className='w-[200px] h-[56px] text-left font-euclid text-[#333843] p-4 font-medium'>
-                                    <p className='font-euclid text-[#333843] font-medium text-sm'>{item.createdAt?.toDate().toDateString()}</p>
+                                <td className='w-[200px] h-[56px] text-left flex flex-col font-euclid text-[#333843] p-4 font-medium'>
+                                    <p className='font-euclid text-[#333843] font-medium text-sm'>{item.created_on?.toDateString()}</p>
+                                    <p className='font-euclid text-[#333843] font-medium text-sm'>{item.created_on?.toLocaleTimeString()}</p>
                                 </td>
                                 <td className='w-[400px] h-[56px] text-left font-euclid text-[#333843] p-4 font-medium'>
                                     <p className='font-euclid text-[#333843] font-medium text-sm'>{item?.author || "N/A"}</p>
@@ -205,6 +203,7 @@ const ViewBlog = () => {
                                 <td className='w-[300px] h-[56px] text-left font-euclid text-[#333843] p-4 font-medium'>
                                     <div className='flex items-center gap-[10px]'>
                                         <MdDeleteForever className="text-[17px] text-[#667085] cursor-pointer" onClick={() => { setDetails(item), setOpenBlog(true); }} />
+                                        <FaRegEdit className="text-[17px] text-[#667085] cursor-pointer" onClick={() => {navigate("/edit-blog", {state: item}), window.scrollTo(0, 0)}} />
                                     </div>
                                 </td>
                             </tr>
@@ -225,46 +224,11 @@ const ViewBlog = () => {
 
             </div>
     
-            <div className='w-full flex items-center justify-between p-5'>
-                <div className='bg-[#FAFAFE] w-[136px] h-[40px] flex items-center justify-center'>
-                    <p className='font-euclid text-[#667085] text-base'>Page {currentPage} of {totalPages}</p>
-                </div>
-
-                <div>
-                    <div className='flex h-[34px] justify-center  w-full gap-2 items-center'>
-
-                        <div 
-                            onClick={handlePrevPage} 
-                            className={`bg-[#FAFAFE] transition-all duration-500 ease-in-out  flex justify-center items-center cursor-pointer w-8 h-full  ${currentPage === 1 && 'opacity-50 cursor-not-allowed'}`}
-                        >
-                            <IoIosArrowBack className='text-[#667085] hover:text-[#fff]'/>
-                        </div>
-
-                        {[...Array(totalPages)].map((_, index) => (
-                            <div 
-                               key={index} 
-                               onClick={() => setCurrentPage(index + 1)} 
-                               className={`transition-all duration-500 ease-in-out flex justify-center items-center cursor-pointer w-8 h-full ${
-                                   currentPage === index + 1 
-                                   ? 'bg-[#1EC677] text-white'  // Active page styling
-                                   : 'bg-[#FAFAFE] hover:bg-[#FAFAFE]'  // Inactive page styling
-                               }`}
-                               >
-                                {index + 1}
-                            </div>
-                        ))}
-
-
-                        <div 
-                            onClick={handleNextPage} 
-                            className={`transition-all duration-500 ease-in-out flex justify-center items-center cursor-pointer w-8 h-full  bg-[#FAFAFE] ${currentPage === totalPages && 'opacity-50 cursor-not-allowed'}`}
-                        >
-                            <IoIosArrowForward className='text-[#667085] hover:text-[#fff]'/>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
+            <Pagination 
+                currentPage={currentPage} 
+                totalPages={totalPages} 
+                setCurrentPage={setCurrentPage}
+            />
 
         </div>
 
